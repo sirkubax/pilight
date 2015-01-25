@@ -1,0 +1,114 @@
+{
+	"living": {
+		"name": "Salon",
+		"nadia": {
+			"name": "Nadia",
+			"protocol": [ "clarus_switch" ],
+			"id": [{
+				"id": "A2",
+				"unit": 34
+			}],
+			"state": "on"
+		},
+		"kominek": {
+			"name": "Kominek",
+			"protocol": [ "clarus_switch" ],
+			"id": [{
+				"id": "B1",
+				"unit": 34
+			}],
+			"state": "on"
+		},
+		"szklarnia": {
+			"name": "Szklarnia",
+			"protocol": [ "clarus_switch" ],
+			"id": [{
+				"id": "C3",
+				"unit": 34
+			}],
+			"state": "off"
+		},
+		"zapach": {
+			"name": "Zapach",
+			"protocol": [ "conrad_rsl_switch" ],
+			"id": [{
+				"id": 2,
+				"unit": 1
+			}],
+			"state": "on"
+		},
+		"kaloryfer": {
+			"name": "Kaloryfer",
+			"protocol": [ "conrad_rsl_switch" ],
+			"id": [{
+				"id": 1,
+				"unit": 3
+			}],
+			"state": "off"
+		},
+		"weather": {
+			"name": "Weather",
+			"protocol": [ "generic_weather" ],
+			"id": [{
+				"id": 102
+			}],
+			"temperature": 2300,
+			"humidity": 7500,
+			"battery": 1
+		},
+		"weather2": {
+			"name": "Weather2",
+			"protocol": [ "alecto_wsd17" ],
+			"id": [{
+				"id": 4
+			}],
+			"temperature": 1234,
+			"gui-decimals": 1,
+			"device-decimals": 1
+		},
+		"temperature": {
+			"name": "Temperature",
+			"protocol": [ "rpi_temp" ],
+			"id": [{
+				"id": 1
+			}],
+			"temperature": 38470
+		},
+		"genericApi": {
+			"name": "GenericApi",
+			"protocol": [ "generic_api" ],
+			"id": [{
+				"id": 1
+			}],
+			"temperature": 111,
+			"dimlevel": 40084
+		},
+		"genericApi2": {
+			"name": "GenericApi2",
+			"protocol": [ "generic_api" ],
+			"id": [{
+				"id": 2
+			}],
+			"temperature": 111,
+			"dimlevel": 40084
+		},
+		"weather3": {
+			"name": "Weather3",
+			"protocol": [ "alecto_wsd17" ],
+			"id": [{
+				"id": 5
+			}],
+			"temperature": 1234,
+			"gui-decimals": 1,
+			"device-decimals": 1
+		},
+		"weatherapi": {
+			"name": "Weather API",
+			"protocol": [ "alecto_wsd17" ],
+			"id": [{
+				"id": 1
+			}],
+			"temperature": 111
+		}
+	}
+}
