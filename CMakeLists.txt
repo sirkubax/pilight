@@ -226,6 +226,11 @@ if(${PROTOCOL_GENERIC_DIMMER} MATCHES "OFF")
 	list(REMOVE_ITEM protocol "${PROJECT_SOURCE_DIR}/libs/protocols/generic_dimmer.c")
 endif()
 
+if(${PROTOCOL_GENERIC_API} MATCHES "OFF")
+	list(REMOVE_ITEM protocol_headers "${PROJECT_SOURCE_DIR}/libs/protocols/generic_api.h")
+	list(REMOVE_ITEM protocol "${PROJECT_SOURCE_DIR}/libs/protocols/generic_api.c")
+endif()
+
 if(${PROTOCOL_GENERIC_SWITCH} MATCHES "OFF")
 	list(REMOVE_ITEM protocol_headers "${PROJECT_SOURCE_DIR}/libs/protocols/generic_switch.h")
 	list(REMOVE_ITEM protocol "${PROJECT_SOURCE_DIR}/libs/protocols/generic_switch.c")

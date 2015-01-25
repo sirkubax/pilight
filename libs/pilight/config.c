@@ -46,6 +46,7 @@
 static struct conf_locations_t *conf_locations = NULL;
 
 int config_update(char *protoname, JsonNode *json, JsonNode **out) {
+	logprintf(LOG_DEBUG, "update config");
 	/* The pointer to the config locations */
 	struct conf_locations_t *lptr = conf_locations;
 	/* The pointer to the config devices */

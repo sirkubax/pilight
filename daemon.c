@@ -257,6 +257,8 @@ static void broadcast_queue(char *protoname, JsonNode *json) {
 		}
 
 		char *jstr = json_stringify(json, NULL);
+        //char *conf = json_stringify(bcqueue->jmessage, NULL);
+        logprintf(LOG_DEBUG, "bqueue %s", jstr);
 		bnode->jmessage = json_decode(jstr);
 		if(json_find_member(bnode->jmessage, "uuid") == NULL && strlen(pilight_uuid) > 0) {
 			json_append_member(bnode->jmessage, "uuid", json_mkstring(pilight_uuid));
@@ -269,6 +271,8 @@ static void broadcast_queue(char *protoname, JsonNode *json) {
 			exit(EXIT_FAILURE);
 		}
 		strcpy(bnode->protoname, protoname);
+        char *str = json_stringify(bnode->jmessage, NULL);
+        logprintf(LOG_DEBUG, "bqueue_new %s", str);
 
 		if(bcqueue_number == 0) {
 			bcqueue = bnode;
@@ -299,6 +303,7 @@ void *broadcast(void *param) {
 			char *origin = NULL;
 
 			if(json_find_string(bcqueue->jmessage, "origin", &origin) == 0) {
+				logprintf(LOG_DEBUG, "broadcasted_broadcast_else: %s", bcqueue->jmessage);
 				if(strcmp(origin, "config") == 0) {
 					char *conf = json_stringify(bcqueue->jmessage, NULL);
 					for(i=0;i<MAX_CLIENTS;i++) {
@@ -308,13 +313,14 @@ void *broadcast(void *param) {
 						}
 					}
 					if(broadcasted == 1) {
-						logprintf(LOG_DEBUG, "broadcasted: %s", conf);
+						logprintf(LOG_DEBUG, "broadcasted_broadcast: %s", conf);
 					}
 					sfree((void *)&conf);
 				} else {
 					/* Update the config */
 					if(config_update(bcqueue->protoname, bcqueue->jmessage, &jret) == 0) {
 						char *conf = json_stringify(jret, NULL);
+						logprintf(LOG_DEBUG, "broadcasted_update: %s", conf);
 						for(i=0;i<MAX_CLIENTS;i++) {
 							if(handshakes[i] == GUI) {
 								socket_write(socket_get_clients(i), conf);
@@ -323,7 +329,7 @@ void *broadcast(void *param) {
 						}
 
 						if(broadcasted == 1) {
-							logprintf(LOG_DEBUG, "broadcasted: %s", conf);
+							logprintf(LOG_DEBUG, "broadcasted_broadcast2: %s", conf);
 						}
 						sfree((void *)&conf);
 					}
@@ -380,6 +386,7 @@ void *broadcast(void *param) {
 					}
 
 					if(runmode == 2 && sockfd > 0) {
+						logprintf(LOG_DEBUG, "broadcasted_broadcast23: %s", jbroadcast);
 						struct JsonNode *jupdate = json_decode(jinternal);
 						json_append_member(jupdate, "message", json_mkstring("update"));
 						char *ret = json_stringify(jupdate, NULL);
@@ -389,7 +396,7 @@ void *broadcast(void *param) {
 						sfree((void *)&ret);
 					}
 					if((broadcasted == 1 || nodaemon == 1) && (strcmp(jbroadcast, "{}") != 0 && nrchilds > 1)) {
-						logprintf(LOG_DEBUG, "broadcasted: %s", jbroadcast);
+						logprintf(LOG_DEBUG, "broadcasted_broadcast3: %s", jbroadcast);
 					}
 					sfree((void *)&jinternal);
 					sfree((void *)&jbroadcast);
@@ -1006,6 +1013,7 @@ static void client_controller_parse_code(int i, JsonNode *json) {
 	JsonNode *code = NULL;
 	JsonNode *values = NULL;
 
+	logprintf(LOG_DEBUG, "in controller");
 	if(json_find_string(json, "message", &message) == 0) {
 		/* Send the config file to the controller */
 		if(strcmp(message, "request config") == 0) {
@@ -1068,7 +1076,32 @@ static void client_controller_parse_code(int i, JsonNode *json) {
 				}
 			}
 		}
-	}
+        else if(strcmp(message, "receiver") == 0) {
+			char *output = json_stringify(json, NULL);
+			logprintf(LOG_DEBUG, "controll_reciver %s", output);
+            JsonNode *jsettings = NULL;
+            if((jsettings = json_find_member(json, "message")) != NULL ) {
+                json_remove_from_parent(jsettings);
+            }
+
+            //char * pname;
+            //pname = json_find_member(json, "protocol")
+		    //pilight.broadcast(procProtocol->id, procProtocol->message);
+		    pilight.broadcast("generic_api", json);
+        }
+    }
+    else if(json_find_string(json, "protocol", &message) == 0) {
+		char *output = json_stringify(json, NULL);
+		logprintf(LOG_DEBUG, "controll_reciver2 %s", output);
+        //JsonNode *jsettings = NULL;
+        //if((jsettings = json_find_member(json, "message")) != NULL ) {
+        //    json_remove_from_parent(jsettings);
+        //}
+	    pilight.broadcast(message, json);
+    }
+    else{
+		logprintf(LOG_DEBUG, "controll_reciver3");
+    }
 }
 
 #ifdef WEBSERVER
@@ -1170,7 +1203,8 @@ static void socket_parse_data(int i, char *buffer) {
 	if(strcmp(buffer, "HEART") == 0) {
 		socket_write(sd, "BEAT");
 	} else {
-		logprintf(LOG_DEBUG, "socket recv: %s", buffer);
+		logprintf(LOG_DEBUG, "socket recv_parse_data: %s", buffer);
+		//logprintf(LOG_DEBUG, "socket message: %s", message);
 		/* Serve static webserver page. This is the only request that's is
 		   expected not to be a json object */
 #ifdef WEBSERVER
@@ -1184,12 +1218,15 @@ static void socket_parse_data(int i, char *buffer) {
 		if(json_validate(buffer) == true) {
 #endif
 			json = json_decode(buffer);
+            char *output = json_stringify(json, NULL);
+		    logprintf(LOG_DEBUG, "socket r_p_d j: %s", output);
 
 			/* The incognito mode is used by the daemon to emulate certain clients.
 			   Temporary change the client type from the node mode to the emulated
 			   client mode. */
 			if(json_find_string(json, "incognito", &incognito) == 0) {
 				incognito_mode = 1;
+		        logprintf(LOG_DEBUG, "socket incognito: %s", output);
 				for(x=0;x<(sizeof(clients)/sizeof(clients[0]));x++) {
 					if(strcmp(clients[x], incognito) == 0) {
 						handshakes[i] = x;
@@ -1197,6 +1234,7 @@ static void socket_parse_data(int i, char *buffer) {
 					}
 				}
 			} else if(json_find_string(json, "message", &message) == 0) {
+		        logprintf(LOG_DEBUG, "socket m r_p_d j: %s", output);
 				if(handshakes[i] != NODE && handshakes[i] != RECEIVER && handshakes[i] > -1) {
 					if(runmode == 2 && sockfd > 0 && strcmp(message, "request config") != 0) {
 						socket_write(sockfd, "{\"incognito\":\"%s\"}", clients[handshakes[i]]);
@@ -1216,6 +1254,7 @@ static void socket_parse_data(int i, char *buffer) {
 						}
 					}
 				} else if(handshakes[i] == CONTROLLER || handshakes[i] == GUI) {
+		            logprintf(LOG_DEBUG, "socket recv_C|G: %s", buffer);
 					client_controller_parse_code(i, json);
 					if(strcmp(message, "send") == 0) {
 						for(x=0;x<(sizeof(clients)/sizeof(clients[0]));x++) {
@@ -1225,7 +1264,18 @@ static void socket_parse_data(int i, char *buffer) {
 							}
 						}
 					}
+                    else if(strcmp(message, "receiver") == 0) {
+						for(x=0;x<(sizeof(clients)/sizeof(clients[0]));x++) {
+		                    logprintf(LOG_DEBUG, "socket W_recv_C|G: %s", buffer);
+							if(handshakes[x] == NODE || handshakes[x] == GUI) {
+								socket_write(socket_get_clients(x), "{\"incognito\":\"controller\"}");
+								socket_write(socket_get_clients(x), buffer);
+							}
+						}
+					}
 				} else {
+		            logprintf(LOG_DEBUG, "socket E r_p_d j: %s", output);
+		            logprintf(LOG_DEBUG, "socket message: %s", message);
 					/* Check if we matched a know client type */
 					for(x=0;x<(sizeof(clients)/sizeof(clients[0]));x++) {
 						char *tmp = malloc(8+strlen(clients[x]));
@@ -1268,7 +1318,32 @@ static void socket_parse_data(int i, char *buffer) {
 					incognito_mode = 0;
 				}
 			}
-
+            
+            else if(json_find_string(json, "message", &message) == 0) {
+				logprintf(LOG_DEBUG, "socket ELIFif: %s", output);
+				logprintf(LOG_DEBUG, "socket ELIFif message: %s", message);
+            } 
+            else if(json_find_string(json, "origin", &message) == 0) {
+				logprintf(LOG_DEBUG, "socket ELorig: %s", output);
+				logprintf(LOG_DEBUG, "socket ELorig message: %s", message);
+                if(strcmp(message, "receiver") == 0) {
+				    logprintf(LOG_DEBUG, "socket EL before contr: %s", message);
+					client_controller_parse_code(-1, json);
+                }
+                else{
+				    logprintf(LOG_DEBUG, "socket ELorig message: not rec %s", message);
+                }
+            } 
+            //else if(json_find_string(output, "message", &message) == 0) {
+			//	logprintf(LOG_DEBUG, "socket ELIFif: %s", output);
+			//	logprintf(LOG_DEBUG, "socket ELIFif message: %s", message);
+            //} 
+			else {
+                //if(strcmp(message, "receiver") == 0){
+				logprintf(LOG_DEBUG, "socket ELSE: %s", output);
+				//logprintf(LOG_DEBUG, "socket ELSE message: %s", message);
+			}
+            
 			if(handshakes[i] == -1 && socket_get_clients(i) > 0) {
 				socket_write(sd, "{\"message\":\"reject client\"}");
 				socket_close(sd);
@@ -1379,7 +1454,7 @@ void *clientize(void *param) {
 				if((recvBuff = socket_read(sockfd)) != NULL) {
 					json = json_decode(recvBuff);
 					json_find_string(json, "message", &message);
-					logprintf(LOG_DEBUG, "socket recv: %s", recvBuff);
+					logprintf(LOG_DEBUG, "socket recv_clientize: %s", recvBuff);
 				} else {
 					client_loop = 0;
 					break;
@@ -1440,6 +1515,7 @@ void *clientize(void *param) {
 							if(client_type == SENDER) {
 								client_sender_parse_code(-1, json);
 							} else if(client_type == CONTROLLER) {
+					            logprintf(LOG_DEBUG, "recv_clientize CON: %s", recvBuff);
 								client_controller_parse_code(-1, json);
 							} else if(client_type == -1) {
 								if(!json_find_member(json, "config")) {
